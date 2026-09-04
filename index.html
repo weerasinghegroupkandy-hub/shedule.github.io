@@ -1,0 +1,231 @@
+      <!-- Task 9 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task9" onchange="updateDatabase()"><span class="time">09:30 - 10:30 PM</span><span class="activity">අවසාන කියවීම සහ නින්දට යාම</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task9" class="upload-btn" id="btn-upload-task9">📷 Add Photo</label>
+                <input type="file" id="file-task9" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task9')">
+                <span id="status-task9" class="upload-status"></span><img id="img-task9" class="task-img">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase Modular SDKs -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, child } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBWj0IoBGlRua3f9AjJQEolwYGnfxGJI7g",
+        authDomain: "myscheduleapp-a16ec.firebaseapp.com",
+        databaseURL: "https://myscheduleapp-a16ec-default-rtdb.firebaseio.com",
+        projectId: "myscheduleapp-a16ec",
+        storageBucket: "myscheduleapp-a16ec.firebasestorage.app",
+        messagingSenderId: "1043546003915",
+        appId: "1:1043546003915:web:c50a8b21db8ceb66443e4e",
+        measurementId: "G-JWETJ7STDJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = ""; 
+    let currentRole = ""; 
+    let viewingUser = ""; 
+
+    window.switchScreen = function(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        document.getElementById(screenId).classList.add('active-screen');
+    };
+
+    function applyTheme(gender) {
+        if (gender === 'girl') document.body.classList.add('theme-girl');
+        else document.body.classList.remove('theme-girl');
+    }
+
+    window.signUp = async function() {
+        const name = document.getElementById('regName').value;
+        const age = document.getElementById('regAge').value;
+        const gender = document.getElementById('regGender').value;
+        const email = document.getElementById('regEmail').value.trim();
+        const pass = document.getElementById('regPass').value;
+
+        if(!name || !age || !email || !pass) { alert("Please fill all details!"); return; }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+            const uid = userCredential.user.uid;
+            
+            const profileData = { name, age, gender, email };
+            await set(ref(db, `users/${uid}/profile`), profileData);
+            
+            currentUser = uid; viewingUser = uid; currentRole = 'student';
+            openDashboard(profileData, uid);
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    };
+
+    window.login = async function() {
+        const email = document.getElementById('loginId').value.trim();
+        const pass = document.getElementById('loginPass').value;
+
+        if (email === 'admin' && pass === '12345687') {
+            currentRole = 'admin';
+            loadAdminScreen();
+            return;
+        }
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+            const uid = userCredential.user.uid;
+            
+            const snapshot = await get(child(ref(db), `users/${uid}/profile`));
+            if (snapshot.exists()) {
+                currentUser = uid; viewingUser = uid; currentRole = 'student';
+                openDashboard(snapshot.val(), uid);
+            }
+        } catch (error) {
+            alert("Invalid Email or Password!");
+        }
+    };
+
+    window.forgotPassword = function() {
+        const email = prompt("Enter your email address to reset your password:");
+        if (email) {
+            sendPasswordResetEmail(auth, email).then(() => {
+                alert("Password reset email sent! Please check your inbox.");
+            }).catch((error) => {
+                alert("Error: " + error.message);
+            });
+        }
+    };
+
+    window.logout = function() { location.reload(); };
+
+    async function loadAdminScreen() {
+        switchScreen('admin-screen');
+        const listDiv = document.getElementById('studentList');
+        listDiv.innerHTML = "Loading students... ⏳";
+
+        const snapshot = await get(child(ref(db), `users`));
+        listDiv.innerHTML = "";
+        
+        if (snapshot.exists()) {
+            const users = snapshot.val();
+            let hasUsers = false;
+            
+            for (let uid in users) {
+                if (users[uid].profile) {
+                    hasUsers = true;
+                    const p = users[uid].profile;
+                    const btn = document.createElement('div');
+                    btn.className = 'student-card';
+                    btn.innerHTML = `<strong>${p.name}</strong> <br><small>${p.email} | ${p.gender}</small>`;
+                    btn.onclick = () => { viewingUser = uid; openDashboard(p, uid); };
+                    listDiv.appendChild(btn);
+                }
+            }
+            if(!hasUsers) listDiv.innerHTML = "<p style='color:#f43f5e;'>No students registered yet.</p>";
+        } else {
+            listDiv.innerHTML = "<p style='color:#f43f5e;'>No data found.</p>";
+        }
+    }
+
+    function openDashboard(profile, uid) {
+        switchScreen('dashboard-screen');
+        applyTheme(profile.gender);
+        document.getElementById('displayProfileName').innerText = profile.name;
+        
+        if (currentRole === 'admin') {
+            document.getElementById('displayProfileDetails').innerHTML = `${profile.age} | ${profile.gender} <br><span style="color:#f43f5e; font-weight:bold;">(Admin View - Live)</span>`;
+            for(let i=1; i<=9; i++) {
+                if(document.getElementById('task'+i)) document.getElementById('task'+i).disabled = true;
+                if(document.getElementById('btn-upload-task'+i)) document.getElementById('btn-upload-task'+i).style.display = 'none';
+            }
+        } else {
+            document.getElementById('displayProfileDetails').innerText = `${profile.age} | ${profile.gender}`;
+            for(let i=1; i<=9; i++) {
+                if(document.getElementById('task'+i)) document.getElementById('task'+i).disabled = false;
+                if(document.getElementById('btn-upload-task'+i)) document.getElementById('btn-upload-task'+i).style.display = 'inline-block';
+            }
+        }
+        listenToDatabase(uid);
+    }
+
+    window.updateDatabase = function() {
+        if(currentRole === 'admin') return;
+        const tasks = {};
+        for(let i=1; i<=9; i++) if(document.getElementById('task'+i)) tasks['task'+i] = document.getElementById('task'+i).checked;
+        set(ref(db, `users/${viewingUser}/progress/tasks`), tasks);
+    };
+
+    function listenToDatabase(uid) {
+        onValue(ref(db, `users/${uid}/progress`), (snapshot) => {
+            // Reset everything first
+            for(let i=1; i<=9; i++) {
+                if(document.getElementById('task'+i)) document.getElementById('task'+i).checked = false;
+                if(document.getElementById('img-task'+i)) {
+                    document.getElementById('img-task'+i).src = "";
+                    document.getElementById('img-task'+i).style.display = 'none';
+                }
+                if(document.getElementById('status-task'+i)) document.getElementById('status-task'+i).innerText = "";
+            }
+
+            const data = snapshot.val();
+            if(data) {
+                if(data.tasks) {
+                    for(let i=1; i<=9; i++) {
+                        if(data.tasks['task'+i]) document.getElementById('task'+i).checked = true;
+                    }
+                }
+                if(data.images) {
+                    for(let i=1; i<=9; i++) {
+                        if(data.images['task'+i]) {
+                            document.getElementById('img-task'+i).src = data.images['task'+i];
+                            document.getElementById('img-task'+i).style.display = 'block';
+                            if(currentRole !== 'admin') document.getElementById('status-task'+i).innerText = "✅ Saved";
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Individual Task Photo Upload
+    window.uploadToImgBB = async function(event, taskId) {
+        if(currentRole === 'admin') return;
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const statusEl = document.getElementById('status-' + taskId);
+        statusEl.innerText = "⏳ Uploading...";
+        statusEl.style.color = "var(--theme-sec)";
+        
+        const apiKey = 'd82f2a4a323b1aeb95d4bb0ed98a1357'; 
+        const formData = new FormData(); formData.append('image', file);
+
+        try {
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                // Save specific task image directly to database
+                await set(ref(db, `users/${viewingUser}/progress/images/${taskId}`), data.data.url);
+                statusEl.innerText = "✅ Successfully Uploaded!";
+            } else {
+                statusEl.innerText = "❌ Upload Failed.";
+                statusEl.style.color = "#f43f5e";
+            }
+        } catch (error) {
+            statusEl.innerText = "❌ Error.";
+            statusEl.style.color = "#f43f5e";
+        }
+    };
+</script>
+
+</body>
+</html>
