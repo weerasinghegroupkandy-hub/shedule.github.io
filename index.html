@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Schedule - Auth System</title>
+    <title>Pro Schedule - Auth & Summary</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -35,11 +35,17 @@
         .btn-outline { background: transparent; border: 1px solid var(--theme-main); color: var(--theme-main); }
         .link-text { color: var(--theme-sec); font-size: 13px; cursor: pointer; margin-top: 10px; text-decoration: underline; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px; border-bottom: 2px solid var(--glass-border); padding-bottom: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; border-bottom: 2px solid var(--glass-border); padding-bottom: 15px; }
         .profile-name { color: var(--theme-main); font-size: 22px; font-weight: bold; }
         .profile-details { font-size: 13px; color: var(--text-main); }
         
-        .section-title { color: var(--theme-sec); font-size: 14px; margin: 25px 0 15px 0; font-weight: 600; text-transform: uppercase; width: 100%; }
+        /* Progress Summary UI */
+        .progress-container { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--theme-main); border-radius: 12px; padding: 15px; margin-bottom: 25px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .progress-header { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: var(--theme-sec); margin-bottom: 10px; }
+        .progress-bar-bg { width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--theme-main); transition: width 0.5s ease-in-out; box-shadow: 0 0 10px var(--theme-main); }
+
+        .section-title { color: var(--theme-sec); font-size: 14px; margin: 15px 0 15px 0; font-weight: 600; text-transform: uppercase; width: 100%; }
         
         /* Individual Task UI */
         .schedule-item { display: flex; flex-direction: column; width: 100%; padding: 15px 20px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; margin-bottom: 12px; border: 1px solid transparent; transition: 0.3s; }
@@ -55,12 +61,23 @@
         .time { flex: 0 0 170px; font-weight: 700; color: var(--theme-main); font-size: 14px; }
         .activity { flex-grow: 1; font-size: 14px; color: var(--text-light); }
         
-        /* Photo Upload UI for each task */
+        /* Photo Upload & Download UI */
         .task-upload { margin-top: 10px; margin-left: 37px; display: flex; flex-direction: column; gap: 8px; }
         .upload-btn { font-size: 11px; background: rgba(0,0,0,0.5); border: 1px dashed var(--theme-main); color: var(--theme-main); padding: 5px 10px; border-radius: 5px; cursor: pointer; width: fit-content; transition: 0.3s; }
         .upload-btn:hover { background: var(--theme-main); color: #000; }
-        .task-img { max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid var(--theme-sec); display: none; object-fit: cover; }
+        
+        .download-btn { font-size: 11px; background: rgba(0,0,0,0.5); border: 1px solid var(--theme-sec); color: var(--theme-sec); padding: 5px 10px; border-radius: 5px; cursor: pointer; width: fit-content; transition: 0.3s; display: none; }
+        .download-btn:hover { background: var(--theme-sec); color: #000; }
+
+        .task-img { max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid var(--theme-sec); display: none; object-fit: cover; margin-top: 5px; }
         .upload-status { font-size: 11px; font-weight: bold; }
+
+        /* Photo Tick Badge Style */
+        .photo-tick-badge {
+            display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold;
+            color: var(--theme-sec); background: rgba(74, 222, 128, 0.15); border: 1px solid var(--theme-sec);
+            padding: 3px 8px; border-radius: 6px;
+        }
 
         .student-card { background: rgba(0,0,0,0.4); border: 1px solid var(--theme-main); padding: 15px; border-radius: 10px; margin-bottom: 10px; width: 100%; max-width: 400px; cursor: pointer; text-align: center; transition: 0.3s; }
         .student-card:hover { background: var(--theme-main); color: #000; }
@@ -70,7 +87,7 @@
             .time, .activity { margin-left: 37px; margin-bottom: 5px;}
             input[type="checkbox"] { position: absolute; top: 15px; left: 15px; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
-            .task-upload { margin-left: 0; margin-top: 15px; align-items: center; }
+            .task-upload { margin-left: 0; margin-top: 15px; align-items: flex-start; }
             .task-img { max-width: 100%; }
         }
     </style>
@@ -79,7 +96,6 @@
 
 <div class="container">
     
-    <!-- 1. Login Screen -->
     <div id="login-screen" class="screen active-screen">
         <h2>🔐 Login</h2>
         <div class="input-group"><label>Email (or 'admin')</label><input type="text" id="loginId" placeholder="Enter Email"></div>
@@ -89,7 +105,6 @@
         <div style="margin-top: 20px; color: var(--text-main); font-size: 14px;">Don't have an account? <span class="link-text" onclick="switchScreen('signup-screen')">Sign Up Here</span></div>
     </div>
 
-    <!-- 2. Sign Up Screen -->
     <div id="signup-screen" class="screen">
         <h2>📝 Create Account</h2>
         <div class="input-group"><label>Full Name</label><input type="text" id="regName" placeholder="Your Name"></div>
@@ -101,130 +116,75 @@
         <span class="link-text" onclick="switchScreen('login-screen')">Back to Login</span>
     </div>
 
-    <!-- 3. Admin Dashboard -->
     <div id="admin-screen" class="screen">
         <h2>👨‍🏫 Admin: Student List</h2>
         <div id="studentList" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
         <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Logout</button>
     </div>
 
-    <!-- 4. Schedule Dashboard Screen -->
     <div id="dashboard-screen" class="screen">
         <div class="header">
             <div class="profile-info"><div class="profile-name" id="displayProfileName">Name</div><div class="profile-details" id="displayProfileDetails">Details</div></div>
             <div><button class="btn btn-outline" style="padding: 6px 15px; width: auto;" onclick="logout()">Logout / Back</button></div>
         </div>
 
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>📊 Daily Progress Summary</span>
+                <span id="progressText" style="color:var(--text-light);">0/9 Completed (0%)</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+
+        <!-- TASKS -->
         <div class="section-title">🌅 උදෑසන (Morning)</div>
-        <!-- Task 1 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task1" onchange="updateDatabase()"><span class="time">05:30 - 05:45 AM</span><span class="activity">අවදි වීම, වතුර පානය</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task1" class="upload-btn" id="btn-upload-task1">📷 Add Photo</label>
-                <input type="file" id="file-task1" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task1')">
-                <span id="status-task1" class="upload-status"></span><img id="img-task1" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task1" onchange="updateDatabase()"><span class="time">05:30 - 05:45 AM</span><span class="activity">අවදි වීම, වතුර පානය</span></div>
+            <div class="task-upload"><label for="file-task1" class="upload-btn" id="btn-upload-task1">📷 Add Photo</label><input type="file" id="file-task1" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task1')"><span id="status-task1" class="upload-status"></span><img id="img-task1" class="task-img"><button id="dl-task1" class="download-btn" onclick="downloadImage('img-task1', 'Task_1')">⬇️ Download Photo</button></div>
         </div>
-        <!-- Task 2 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task2" onchange="updateDatabase()"><span class="time">05:45 - 06:15 AM</span><span class="activity">උදෑසන සැහැල්ලු ව්‍යායාම</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task2" class="upload-btn" id="btn-upload-task2">📷 Add Photo</label>
-                <input type="file" id="file-task2" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task2')">
-                <span id="status-task2" class="upload-status"></span><img id="img-task2" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task2" onchange="updateDatabase()"><span class="time">05:45 - 06:15 AM</span><span class="activity">උදෑසන සැහැල්ලු ව්‍යායාම</span></div>
+            <div class="task-upload"><label for="file-task2" class="upload-btn" id="btn-upload-task2">📷 Add Photo</label><input type="file" id="file-task2" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task2')"><span id="status-task2" class="upload-status"></span><img id="img-task2" class="task-img"><button id="dl-task2" class="download-btn" onclick="downloadImage('img-task2', 'Task_2')">⬇️ Download Photo</button></div>
         </div>
-        <!-- Task 3 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task3" onchange="updateDatabase()"><span class="time">06:15 - 08:00 AM</span><span class="activity">Study Session 1: Deep Study</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task3" class="upload-btn" id="btn-upload-task3">📷 Add Photo</label>
-                <input type="file" id="file-task3" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task3')">
-                <span id="status-task3" class="upload-status"></span><img id="img-task3" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task3" onchange="updateDatabase()"><span class="time">06:15 - 08:00 AM</span><span class="activity">Study Session 1: Deep Study</span></div>
+            <div class="task-upload"><label for="file-task3" class="upload-btn" id="btn-upload-task3">📷 Add Photo</label><input type="file" id="file-task3" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task3')"><span id="status-task3" class="upload-status"></span><img id="img-task3" class="task-img"><button id="dl-task3" class="download-btn" onclick="downloadImage('img-task3', 'Task_3')">⬇️ Download Photo</button></div>
         </div>
 
         <div class="section-title">☀️ දවල් කාලය (Daytime)</div>
-        <!-- Task 4 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task4" onchange="updateDatabase()"><span class="time">09:00 - 01:00 PM</span><span class="activity">Study Session 2: Lectures / Classes</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task4" class="upload-btn" id="btn-upload-task4">📷 Add Photo</label>
-                <input type="file" id="file-task4" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task4')">
-                <span id="status-task4" class="upload-status"></span><img id="img-task4" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task4" onchange="updateDatabase()"><span class="time">09:00 - 01:00 PM</span><span class="activity">Study Session 2: Lectures / Classes</span></div>
+            <div class="task-upload"><label for="file-task4" class="upload-btn" id="btn-upload-task4">📷 Add Photo</label><input type="file" id="file-task4" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task4')"><span id="status-task4" class="upload-status"></span><img id="img-task4" class="task-img"><button id="dl-task4" class="download-btn" onclick="downloadImage('img-task4', 'Task_4')">⬇️ Download Photo</button></div>
         </div>
-        <!-- Task 5 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task5" onchange="updateDatabase()"><span class="time">02:00 - 04:30 PM</span><span class="activity">Study Session 3: Past papers & Assignments</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task5" class="upload-btn" id="btn-upload-task5">📷 Add Photo</label>
-                <input type="file" id="file-task5" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task5')">
-                <span id="status-task5" class="upload-status"></span><img id="img-task5" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task5" onchange="updateDatabase()"><span class="time">02:00 - 04:30 PM</span><span class="activity">Study Session 3: Past papers & Assignments</span></div>
+            <div class="task-upload"><label for="file-task5" class="upload-btn" id="btn-upload-task5">📷 Add Photo</label><input type="file" id="file-task5" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task5')"><span id="status-task5" class="upload-status"></span><img id="img-task5" class="task-img"><button id="dl-task5" class="download-btn" onclick="downloadImage('img-task5', 'Task_5')">⬇️ Download Photo</button></div>
         </div>
 
         <div class="section-title">🌇 සවස (Evening)</div>
-        <!-- Task 6 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task6" onchange="updateDatabase()"><span class="time">04:30 - 05:45 PM</span><span class="activity">ප්‍රධාන ව්‍යායාම (Main Workout)</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task6" class="upload-btn" id="btn-upload-task6">📷 Add Photo</label>
-                <input type="file" id="file-task6" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task6')">
-                <span id="status-task6" class="upload-status"></span><img id="img-task6" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task6" onchange="updateDatabase()"><span class="time">04:30 - 05:45 PM</span><span class="activity">ප්‍රධාන ව්‍යායාම (Main Workout)</span></div>
+            <div class="task-upload"><label for="file-task6" class="upload-btn" id="btn-upload-task6">📷 Add Photo</label><input type="file" id="file-task6" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task6')"><span id="status-task6" class="upload-status"></span><img id="img-task6" class="task-img"><button id="dl-task6" class="download-btn" onclick="downloadImage('img-task6', 'Task_6')">⬇️ Download Photo</button></div>
         </div>
 
         <div class="section-title">🌙 රාත්‍රී කාලය (Night)</div>
-        <!-- Task 7 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task7" onchange="updateDatabase()"><span class="time">06:45 - 08:30 PM</span><span class="activity">Study Session 4: Night Revision</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task7" class="upload-btn" id="btn-upload-task7">📷 Add Photo</label>
-                <input type="file" id="file-task7" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task7')">
-                <span id="status-task7" class="upload-status"></span><img id="img-task7" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task7" onchange="updateDatabase()"><span class="time">06:45 - 08:30 PM</span><span class="activity">Study Session 4: Night Revision</span></div>
+            <div class="task-upload"><label for="file-task7" class="upload-btn" id="btn-upload-task7">📷 Add Photo</label><input type="file" id="file-task7" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task7')"><span id="status-task7" class="upload-status"></span><img id="img-task7" class="task-img"><button id="dl-task7" class="download-btn" onclick="downloadImage('img-task7', 'Task_7')">⬇️ Download Photo</button></div>
         </div>
-        <!-- Task 8 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task8" onchange="updateDatabase()"><span class="time">09:00 - 09:30 PM</span><span class="activity"><strong>Musturbate / Handjob</strong></span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task8" class="upload-btn" id="btn-upload-task8">📷 Add Photo</label>
-                <input type="file" id="file-task8" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task8')">
-                <span id="status-task8" class="upload-status"></span><img id="img-task8" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task8" onchange="updateDatabase()"><span class="time">09:00 - 09:30 PM</span><span class="activity"><strong>Musturbate / Handjob</strong></span></div>
+            <div class="task-upload"><label for="file-task8" class="upload-btn" id="btn-upload-task8">📷 Add Photo</label><input type="file" id="file-task8" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task8')"><span id="status-task8" class="upload-status"></span><img id="img-task8" class="task-img"><button id="dl-task8" class="download-btn" onclick="downloadImage('img-task8', 'Task_8')">⬇️ Download Photo</button></div>
         </div>
-        <!-- Task 9 -->
         <div class="schedule-item">
-            <div class="task-row">
-                <input type="checkbox" id="task9" onchange="updateDatabase()"><span class="time">09:30 - 10:30 PM</span><span class="activity">අවසාන කියවීම සහ නින්දට යාම</span>
-            </div>
-            <div class="task-upload">
-                <label for="file-task9" class="upload-btn" id="btn-upload-task9">📷 Add Photo</label>
-                <input type="file" id="file-task9" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task9')">
-                <span id="status-task9" class="upload-status"></span><img id="img-task9" class="task-img">
-            </div>
+            <div class="task-row"><input type="checkbox" id="task9" onchange="updateDatabase()"><span class="time">09:30 - 10:30 PM</span><span class="activity">අවසාන කියවීම සහ නින්දට යාම</span></div>
+            <div class="task-upload"><label for="file-task9" class="upload-btn" id="btn-upload-task9">📷 Add Photo</label><input type="file" id="file-task9" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task9')"><span id="status-task9" class="upload-status"></span><img id="img-task9" class="task-img"><button id="dl-task9" class="download-btn" onclick="downloadImage('img-task9', 'Task_9')">⬇️ Download Photo</button></div>
         </div>
     </div>
 </div>
 
-<!-- Firebase Modular SDKs -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
     import { getDatabase, ref, set, get, onValue, child } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
@@ -364,6 +324,7 @@
             for(let i=1; i<=9; i++) {
                 if(document.getElementById('task'+i)) document.getElementById('task'+i).disabled = false;
                 if(document.getElementById('btn-upload-task'+i)) document.getElementById('btn-upload-task'+i).style.display = 'inline-block';
+                if(document.getElementById('dl-task'+i)) document.getElementById('dl-task'+i).style.display = 'none'; // Hide download from student
             }
         }
         listenToDatabase(uid);
@@ -376,6 +337,17 @@
         set(ref(db, `users/${viewingUser}/progress/tasks`), tasks);
     };
 
+    function updateProgressUI(tasksData) {
+        let completed = 0;
+        let total = 9;
+        for(let i=1; i<=9; i++) {
+            if(tasksData && tasksData['task'+i]) completed++;
+        }
+        let percent = Math.round((completed / total) * 100);
+        document.getElementById('progressText').innerText = `${completed}/${total} Completed (${percent}%)`;
+        document.getElementById('progressBar').style.width = `${percent}%`;
+    }
+
     function listenToDatabase(uid) {
         onValue(ref(db, `users/${uid}/progress`), (snapshot) => {
             // Reset everything first
@@ -385,12 +357,16 @@
                     document.getElementById('img-task'+i).src = "";
                     document.getElementById('img-task'+i).style.display = 'none';
                 }
-                if(document.getElementById('status-task'+i)) document.getElementById('status-task'+i).innerText = "";
+                if(document.getElementById('status-task'+i)) document.getElementById('status-task'+i).innerHTML = "";
+                if(document.getElementById('dl-task'+i)) document.getElementById('dl-task'+i).style.display = 'none'; // hide DL button
             }
 
             const data = snapshot.val();
+            let tasksData = {};
+            
             if(data) {
                 if(data.tasks) {
+                    tasksData = data.tasks;
                     for(let i=1; i<=9; i++) {
                         if(data.tasks['task'+i]) document.getElementById('task'+i).checked = true;
                     }
@@ -400,15 +376,22 @@
                         if(data.images['task'+i]) {
                             document.getElementById('img-task'+i).src = data.images['task'+i];
                             document.getElementById('img-task'+i).style.display = 'block';
-                            if(currentRole !== 'admin') document.getElementById('status-task'+i).innerText = "✅ Saved";
+                            
+                            if (currentRole !== 'admin') {
+                                // Student view - tick mark
+                                document.getElementById('status-task'+i).innerHTML = `<span class="photo-tick-badge">✔ Photo Added</span>`;
+                            } else {
+                                // Admin (Parent) view - show download button
+                                document.getElementById('dl-task'+i).style.display = 'inline-block';
+                            }
                         }
                     }
                 }
             }
+            updateProgressUI(tasksData);
         });
     }
 
-    // Individual Task Photo Upload
     window.uploadToImgBB = async function(event, taskId) {
         if(currentRole === 'admin') return;
         const file = event.target.files[0];
@@ -419,15 +402,22 @@
         statusEl.style.color = "var(--theme-sec)";
         
         const apiKey = 'd82f2a4a323b1aeb95d4bb0ed98a1357'; 
-        const formData = new FormData(); formData.append('image', file);
+        const formData = new FormData(); 
+        formData.append('image', file);
 
         try {
             const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: 'POST', body: formData });
             const data = await response.json();
             if (data.success) {
-                // Save specific task image directly to database
                 await set(ref(db, `users/${viewingUser}/progress/images/${taskId}`), data.data.url);
-                statusEl.innerText = "✅ Successfully Uploaded!";
+                
+                const taskCheckbox = document.getElementById(taskId);
+                if (taskCheckbox && !taskCheckbox.checked) {
+                    taskCheckbox.checked = true;
+                    updateDatabase();
+                }
+
+                statusEl.innerHTML = `<span class="photo-tick-badge">✔ Photo Added</span>`;
             } else {
                 statusEl.innerText = "❌ Upload Failed.";
                 statusEl.style.color = "#f43f5e";
@@ -435,6 +425,38 @@
         } catch (error) {
             statusEl.innerText = "❌ Error.";
             statusEl.style.color = "#f43f5e";
+        }
+    };
+
+    // Download Function for Admin (Parents)
+    window.downloadImage = async function(imgId, taskName) {
+        const imgElement = document.getElementById(imgId);
+        if(!imgElement || !imgElement.src) return;
+        
+        const imgUrl = imgElement.src;
+        const studentName = document.getElementById('displayProfileName').innerText.replace(/\s+/g, '_');
+        const filename = `${studentName}_${taskName}.jpg`; // e.g., Tharusha_Task_1.jpg
+
+        try {
+            // Try fetching image for direct download
+            const response = await fetch(imgUrl);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = filename;
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.warn("Direct download blocked by CORS. Opening in new tab instead.");
+            // Fallback: Open image in a new tab if direct download fails due to server restrictions
+            window.open(imgUrl, '_blank');
         }
     };
 </script>
