@@ -1,4 +1,216 @@
-      <!-- Task 9 -->
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Schedule - Auth System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --theme-main: #66fcf1; --theme-sec: #4ade80; --theme-glow: rgba(102, 252, 241, 0.4);
+            --bg-color: #0b0c10; --glass-bg: rgba(31, 40, 51, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1); 
+            --text-main: #c5c6c7; --text-light: #ffffff;
+        }
+
+        body.theme-girl { --theme-main: #f472b6; --theme-sec: #fb7185; --theme-glow: rgba(244, 114, 182, 0.4); }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #0b0c10 0%, #1f2833 100%); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background-attachment: fixed; transition: 0.5s; }
+        
+        .container { max-width: 850px; width: 100%; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 20px; padding: 30px; border: 1px solid var(--theme-main); box-shadow: 0 10px 30px var(--theme-glow); transition: 0.5s; }
+        
+        .screen { display: none; flex-direction: column; align-items: center; padding: 20px; width: 100%; }
+        .active-screen { display: flex; }
+
+        h2 { color: var(--theme-main); margin-bottom: 20px; text-transform: uppercase; text-align: center; text-shadow: 0 0 10px var(--theme-glow); }
+        
+        .input-group { margin-bottom: 20px; width: 100%; max-width: 350px;}
+        .input-group label { display: block; margin-bottom: 5px; color: var(--theme-sec); font-size: 14px; }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--theme-main); background: rgba(0,0,0,0.3); color: white; outline: none; }
+        
+        .btn { width: 100%; max-width: 350px; background: var(--theme-main); color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        .btn:hover { box-shadow: 0 0 15px var(--theme-main); }
+        .btn-outline { background: transparent; border: 1px solid var(--theme-main); color: var(--theme-main); }
+        .link-text { color: var(--theme-sec); font-size: 13px; cursor: pointer; margin-top: 10px; text-decoration: underline; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px; border-bottom: 2px solid var(--glass-border); padding-bottom: 15px; }
+        .profile-name { color: var(--theme-main); font-size: 22px; font-weight: bold; }
+        .profile-details { font-size: 13px; color: var(--text-main); }
+        
+        .section-title { color: var(--theme-sec); font-size: 14px; margin: 25px 0 15px 0; font-weight: 600; text-transform: uppercase; width: 100%; }
+        
+        /* Individual Task UI */
+        .schedule-item { display: flex; flex-direction: column; width: 100%; padding: 15px 20px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; margin-bottom: 12px; border: 1px solid transparent; transition: 0.3s; }
+        .schedule-item:hover { border-color: var(--theme-main); }
+        .task-row { display: flex; align-items: center; width: 100%; }
+        
+        input[type="checkbox"] { appearance: none; width: 22px; height: 22px; border: 2px solid var(--text-main); border-radius: 5px; margin-right: 15px; cursor: pointer; position: relative; }
+        input[type="checkbox"]:checked { background: var(--theme-sec); border-color: var(--theme-sec); }
+        input[type="checkbox"]:checked::after { content: "✔"; position: absolute; color: #000; font-weight: bold; font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        input[type="checkbox"]:checked ~ .activity { text-decoration: line-through; color: #6c757d; }
+        input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .time { flex: 0 0 170px; font-weight: 700; color: var(--theme-main); font-size: 14px; }
+        .activity { flex-grow: 1; font-size: 14px; color: var(--text-light); }
+        
+        /* Photo Upload UI for each task */
+        .task-upload { margin-top: 10px; margin-left: 37px; display: flex; flex-direction: column; gap: 8px; }
+        .upload-btn { font-size: 11px; background: rgba(0,0,0,0.5); border: 1px dashed var(--theme-main); color: var(--theme-main); padding: 5px 10px; border-radius: 5px; cursor: pointer; width: fit-content; transition: 0.3s; }
+        .upload-btn:hover { background: var(--theme-main); color: #000; }
+        .task-img { max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid var(--theme-sec); display: none; object-fit: cover; }
+        .upload-status { font-size: 11px; font-weight: bold; }
+
+        .student-card { background: rgba(0,0,0,0.4); border: 1px solid var(--theme-main); padding: 15px; border-radius: 10px; margin-bottom: 10px; width: 100%; max-width: 400px; cursor: pointer; text-align: center; transition: 0.3s; }
+        .student-card:hover { background: var(--theme-main); color: #000; }
+        
+        @media (max-width: 768px) {
+            .task-row { flex-direction: column; align-items: flex-start; }
+            .time, .activity { margin-left: 37px; margin-bottom: 5px;}
+            input[type="checkbox"] { position: absolute; top: 15px; left: 15px; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            .task-upload { margin-left: 0; margin-top: 15px; align-items: center; }
+            .task-img { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- 1. Login Screen -->
+    <div id="login-screen" class="screen active-screen">
+        <h2>🔐 Login</h2>
+        <div class="input-group"><label>Email (or 'admin')</label><input type="text" id="loginId" placeholder="Enter Email"></div>
+        <div class="input-group"><label>Password</label><input type="password" id="loginPass" placeholder="Enter Password"></div>
+        <button class="btn" onclick="login()">LOGIN</button>
+        <span class="link-text" onclick="forgotPassword()">Forgot Password?</span>
+        <div style="margin-top: 20px; color: var(--text-main); font-size: 14px;">Don't have an account? <span class="link-text" onclick="switchScreen('signup-screen')">Sign Up Here</span></div>
+    </div>
+
+    <!-- 2. Sign Up Screen -->
+    <div id="signup-screen" class="screen">
+        <h2>📝 Create Account</h2>
+        <div class="input-group"><label>Full Name</label><input type="text" id="regName" placeholder="Your Name"></div>
+        <div class="input-group"><label>Age / Grade</label><input type="text" id="regAge" placeholder="e.g. 16 Years"></div>
+        <div class="input-group"><label>Gender Theme</label><select id="regGender"><option value="boy">Boy (Cyan Theme)</option><option value="girl">Girl (Pink Theme)</option></select></div>
+        <div class="input-group"><label>Email Address</label><input type="email" id="regEmail" placeholder="your@email.com"></div>
+        <div class="input-group"><label>Password (Min 6 chars)</label><input type="password" id="regPass" placeholder="Create Password"></div>
+        <button class="btn" onclick="signUp()">Create Profile</button>
+        <span class="link-text" onclick="switchScreen('login-screen')">Back to Login</span>
+    </div>
+
+    <!-- 3. Admin Dashboard -->
+    <div id="admin-screen" class="screen">
+        <h2>👨‍🏫 Admin: Student List</h2>
+        <div id="studentList" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+        <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- 4. Schedule Dashboard Screen -->
+    <div id="dashboard-screen" class="screen">
+        <div class="header">
+            <div class="profile-info"><div class="profile-name" id="displayProfileName">Name</div><div class="profile-details" id="displayProfileDetails">Details</div></div>
+            <div><button class="btn btn-outline" style="padding: 6px 15px; width: auto;" onclick="logout()">Logout / Back</button></div>
+        </div>
+
+        <div class="section-title">🌅 උදෑසන (Morning)</div>
+        <!-- Task 1 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task1" onchange="updateDatabase()"><span class="time">05:30 - 05:45 AM</span><span class="activity">අවදි වීම, වතුර පානය</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task1" class="upload-btn" id="btn-upload-task1">📷 Add Photo</label>
+                <input type="file" id="file-task1" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task1')">
+                <span id="status-task1" class="upload-status"></span><img id="img-task1" class="task-img">
+            </div>
+        </div>
+        <!-- Task 2 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task2" onchange="updateDatabase()"><span class="time">05:45 - 06:15 AM</span><span class="activity">උදෑසන සැහැල්ලු ව්‍යායාම</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task2" class="upload-btn" id="btn-upload-task2">📷 Add Photo</label>
+                <input type="file" id="file-task2" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task2')">
+                <span id="status-task2" class="upload-status"></span><img id="img-task2" class="task-img">
+            </div>
+        </div>
+        <!-- Task 3 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task3" onchange="updateDatabase()"><span class="time">06:15 - 08:00 AM</span><span class="activity">Study Session 1: Deep Study</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task3" class="upload-btn" id="btn-upload-task3">📷 Add Photo</label>
+                <input type="file" id="file-task3" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task3')">
+                <span id="status-task3" class="upload-status"></span><img id="img-task3" class="task-img">
+            </div>
+        </div>
+
+        <div class="section-title">☀️ දවල් කාලය (Daytime)</div>
+        <!-- Task 4 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task4" onchange="updateDatabase()"><span class="time">09:00 - 01:00 PM</span><span class="activity">Study Session 2: Lectures / Classes</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task4" class="upload-btn" id="btn-upload-task4">📷 Add Photo</label>
+                <input type="file" id="file-task4" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task4')">
+                <span id="status-task4" class="upload-status"></span><img id="img-task4" class="task-img">
+            </div>
+        </div>
+        <!-- Task 5 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task5" onchange="updateDatabase()"><span class="time">02:00 - 04:30 PM</span><span class="activity">Study Session 3: Past papers & Assignments</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task5" class="upload-btn" id="btn-upload-task5">📷 Add Photo</label>
+                <input type="file" id="file-task5" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task5')">
+                <span id="status-task5" class="upload-status"></span><img id="img-task5" class="task-img">
+            </div>
+        </div>
+
+        <div class="section-title">🌇 සවස (Evening)</div>
+        <!-- Task 6 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task6" onchange="updateDatabase()"><span class="time">04:30 - 05:45 PM</span><span class="activity">ප්‍රධාන ව්‍යායාම (Main Workout)</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task6" class="upload-btn" id="btn-upload-task6">📷 Add Photo</label>
+                <input type="file" id="file-task6" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task6')">
+                <span id="status-task6" class="upload-status"></span><img id="img-task6" class="task-img">
+            </div>
+        </div>
+
+        <div class="section-title">🌙 රාත්‍රී කාලය (Night)</div>
+        <!-- Task 7 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task7" onchange="updateDatabase()"><span class="time">06:45 - 08:30 PM</span><span class="activity">Study Session 4: Night Revision</span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task7" class="upload-btn" id="btn-upload-task7">📷 Add Photo</label>
+                <input type="file" id="file-task7" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task7')">
+                <span id="status-task7" class="upload-status"></span><img id="img-task7" class="task-img">
+            </div>
+        </div>
+        <!-- Task 8 -->
+        <div class="schedule-item">
+            <div class="task-row">
+                <input type="checkbox" id="task8" onchange="updateDatabase()"><span class="time">09:00 - 09:30 PM</span><span class="activity"><strong>Musturbate / Handjob</strong></span>
+            </div>
+            <div class="task-upload">
+                <label for="file-task8" class="upload-btn" id="btn-upload-task8">📷 Add Photo</label>
+                <input type="file" id="file-task8" accept="image/*" style="display:none;" onchange="uploadToImgBB(event, 'task8')">
+                <span id="status-task8" class="upload-status"></span><img id="img-task8" class="task-img">
+            </div>
+        </div>
+        <!-- Task 9 -->
         <div class="schedule-item">
             <div class="task-row">
                 <input type="checkbox" id="task9" onchange="updateDatabase()"><span class="time">09:30 - 10:30 PM</span><span class="activity">අවසාන කියවීම සහ නින්දට යාම</span>
@@ -229,3 +441,4 @@
 
 </body>
 </html>
+
